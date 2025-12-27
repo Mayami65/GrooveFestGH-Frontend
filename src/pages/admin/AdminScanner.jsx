@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { getApiUrl } from '../../config';
 
 export default function AdminScanner() {
     const [scanResult, setScanResult] = useState(null);
@@ -18,8 +19,8 @@ export default function AdminScanner() {
 
         try {
             const endpoint = type === 'qr'
-                ? 'https://backend.test/api/admin/tickets/scan'
-                : 'https://backend.test/api/admin/tickets/verify-code';
+                ? getApiUrl('/api/admin/tickets/scan')
+                : getApiUrl('/api/admin/tickets/verify-code');
 
             const body = type === 'qr'
                 ? { qr_data: data, scanned_by: admin.name }

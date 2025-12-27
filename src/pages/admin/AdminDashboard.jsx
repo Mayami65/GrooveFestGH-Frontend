@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { getApiUrl } from '../../config';
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState(null);
@@ -11,7 +12,7 @@ export default function AdminDashboard() {
 
     const fetchStats = async () => {
         try {
-            const response = await fetch('https://backend.test/api/admin/dashboard/stats');
+            const response = await fetch(getApiUrl('/api/admin/dashboard/stats'));
             const data = await response.json();
             if (data.success) {
                 setStats(data.data);

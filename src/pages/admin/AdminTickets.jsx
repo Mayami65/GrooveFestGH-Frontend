@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { getApiUrl } from '../../config';
 
 export default function AdminTickets() {
     const [tickets, setTickets] = useState([]);
@@ -15,7 +16,7 @@ export default function AdminTickets() {
             if (filter.type) params.append('ticket_type', filter.type);
             if (filter.scanned) params.append('scanned', filter.scanned);
 
-            const response = await fetch(`https://backend.test/api/admin/tickets?${params}`);
+            const response = await fetch(getApiUrl(`/api/admin/tickets?${params}`));
             const data = await response.json();
             if (data.success) {
                 setTickets(data.data.data || []);
@@ -32,7 +33,7 @@ export default function AdminTickets() {
     }, [fetchTickets]);
 
     const handleExport = async () => {
-        window.open('https://backend.test/api/admin/tickets/export', '_blank');
+        window.open(getApiUrl('/api/admin/tickets/export'), '_blank');
     };
 
     return (

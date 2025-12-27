@@ -1,28 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { getApiUrl } from '../config';
 
 export default function PaymentCallback() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const [status, setStatus] = useState('verifying');
-    const [ticketData, setTicketData] = useState(null);
+    const reference = searchParams.get('reference');
+    const [status, setStatus] = useState(reference ? 'verifying' : 'error');
 
     useEffect(() => {
-        const reference = searchParams.get('reference');
-
         if (!reference) {
-            setStatus('error');
             return;
         }
 
         // Verify payment
-        fetch(`https://backend.test/api/tickets/verify/${reference}`)
+        fetch(getApiUrl(`/api/tickets/verify/${reference}`))
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     setStatus('success');
-                    setTicketData(data.data);
                     // Redirect to confirmation after 2 seconds
                     setTimeout(() => {
                         navigate('/confirmation', {
@@ -43,7 +40,7 @@ export default function PaymentCallback() {
                 console.error(err);
                 setStatus('error');
             });
-    }, [searchParams, navigate]);
+    }, [reference, navigate]);
 
     return (
         <div className="min-h-screen bg-background text-white bg-[url('https://grainy-gradients.vercel.app/noise.svg')]">

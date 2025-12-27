@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl } from '../../config';
 
 export default function AdminLogin() {
     const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function AdminLogin() {
         setError('');
 
         try {
-            const response = await fetch('https://backend.test/api/admin/login', {
+            const response = await fetch(getApiUrl('/api/admin/login'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -35,6 +36,7 @@ export default function AdminLogin() {
                 setError(data.message || 'Login failed');
             }
         } catch (err) {
+            console.error('Login error:', err);
             setError('Connection error. Please try again.');
         } finally {
             setLoading(false);

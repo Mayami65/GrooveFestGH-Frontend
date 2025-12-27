@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
+import { getApiUrl } from '../config';
 
 export default function TicketPurchase() {
     const [formData, setFormData] = useState({
@@ -42,7 +43,7 @@ export default function TicketPurchase() {
         };
 
         try {
-            const response = await fetch('https://backend.test/api/tickets', {
+            const response = await fetch(getApiUrl('/api/tickets'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
