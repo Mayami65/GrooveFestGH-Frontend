@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { getApiUrl } from '../config';
 
 export default function TicketPurchase() {
+    const location = useLocation();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -11,8 +13,18 @@ export default function TicketPurchase() {
         quantity: 1
     });
 
+    useEffect(() => {
+        // Recover data if this is a retry
+        if (location.state?.retry) {
+            const savedData = sessionStorage.getItem('ticketFormData');
+            if (savedData) {
+                setFormData(JSON.parse(savedData));
+            }
+        }
+    }, [location.state]);
+
     const ticketPrices = {
-        'Regular': 50,
+        'Regular': 2,
         'VIP': 100
     };
 
@@ -33,6 +45,9 @@ export default function TicketPurchase() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        // Save for potential retry
+        sessionStorage.setItem('ticketFormData', JSON.stringify(formData));
 
         const ticketData = {
             name: formData.name,

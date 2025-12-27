@@ -7,20 +7,23 @@ export default function PaymentCallback() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const reference = searchParams.get('reference');
-    const [status, setStatus] = useState(reference ? 'verifying' : 'error');
+    // If no reference in URL, it might be a cancelled/abandoned payment return
+    const [status, setStatus] = useState(reference ? 'verifying' : 'abandoned');
+    const [failureReason, setFailureReason] = useState(reference ? null : 'Transaction was abandoned');
 
     useEffect(() => {
         if (!reference) {
             return;
         }
 
-        // Verify payment
-        fetch(getApiUrl(`/api/tickets/verify/${reference}`))
-            .then(res => res.json())
-            .then(data => {
+        const verifyPayment = async () => {
+            try {
+                // First try standard verification
+                const res = await fetch(getApiUrl(`/api/tickets/verify/${reference}`));
+                const data = await res.json();
+
                 if (data.success) {
                     setStatus('success');
-                    // Redirect to confirmation after 2 seconds
                     setTimeout(() => {
                         navigate('/confirmation', {
                             state: {
@@ -33,14 +36,41 @@ export default function PaymentCallback() {
                         });
                     }, 2000);
                 } else {
-                    setStatus('failed');
+                    // Verification failed, check specific status
+                    checkDetailedStatus(reference);
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error(err);
                 setStatus('error');
-            });
+            }
+        };
+
+        const checkDetailedStatus = async (ref) => {
+            try {
+                const res = await fetch(getApiUrl(`/api/tickets/status/${ref}`));
+                const data = await res.json();
+
+                if (data.success) {
+                    const ticketStatus = data.data.status;
+                    setStatus(ticketStatus === 'paid' ? 'success' : 'failed');
+                    setFailureReason(data.data.failure_reason || 'Payment could not be verified');
+                } else {
+                    setStatus('failed');
+                    setFailureReason('Ticket not found');
+                }
+            } catch (err) {
+                console.error(err); // Log error but don't use it to change logic more than needed
+                setStatus('error');
+            }
+        };
+
+        verifyPayment();
     }, [reference, navigate]);
+
+    const handleRetry = () => {
+        // Try to restore previous form data if available
+        navigate('/buy-tickets', { state: { retry: true } });
+    };
 
     return (
         <div className="min-h-screen bg-background text-white bg-[url('https://grainy-gradients.vercel.app/noise.svg')]">
@@ -69,18 +99,22 @@ export default function PaymentCallback() {
                         </>
                     )}
 
-                    {status === 'failed' && (
+                    {(status === 'failed' || status === 'abandoned') && (
                         <>
                             <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path>
                                 </svg>
                             </div>
-                            <h1 className="text-2xl font-bold mb-2 text-red-500">Payment Failed</h1>
-                            <p className="text-gray-400 mb-6">Your payment could not be verified</p>
+                            <h1 className="text-2xl font-bold mb-2 text-red-500">
+                                {status === 'abandoned' ? 'Payment Cancelled' : 'Payment Failed'}
+                            </h1>
+                            <p className="text-gray-400 mb-6">
+                                {failureReason || 'Your payment was not successful'}
+                            </p>
                             <button
-                                onClick={() => navigate('/buy-tickets')}
-                                className="bg-primary hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                                onClick={handleRetry}
+                                className="bg-primary hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-colors w-full"
                             >
                                 Try Again
                             </button>
@@ -95,12 +129,12 @@ export default function PaymentCallback() {
                                 </svg>
                             </div>
                             <h1 className="text-2xl font-bold mb-2 text-yellow-500">Something Went Wrong</h1>
-                            <p className="text-gray-400 mb-6">Unable to verify payment</p>
+                            <p className="text-gray-400 mb-6">Unable to verify payment status</p>
                             <button
-                                onClick={() => navigate('/')}
-                                className="bg-primary hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                                onClick={() => navigate('/buy-tickets')}
+                                className="bg-primary hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-colors w-full"
                             >
-                                Go Home
+                                Go Back
                             </button>
                         </>
                     )}
