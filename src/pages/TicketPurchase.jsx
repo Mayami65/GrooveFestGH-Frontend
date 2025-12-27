@@ -24,7 +24,7 @@ export default function TicketPurchase() {
     }, [location.state]);
 
     const ticketPrices = {
-        'Regular': 2,
+        'Regular': 50,
         'VIP': 100
     };
 
