@@ -8,4 +8,14 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  publicDir: 'public',
+  build: {
+    outDir: 'dist',
+    // Copy _redirects file to dist for Netlify
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      }
+    }
+  }
 })
